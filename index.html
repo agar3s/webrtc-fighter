@@ -2,36 +2,104 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>WebRTC figthing online web</title>
+    <title>connect</title>
+
 </head>
 <body>
-    <div id="container">
-
-      <h1><a href="../index.html" title="simpl.info home page">simpl.info</a> RTCDataChannel</h1>
-
-      <div id="buttons">
-        <button id="startButton">Start</button>
-        <button id="sendButton">Send</button>
-        <button id="closeButton">Stop</button>
+    <h1>Battle</h1>
+    
+    <label for="username">Username:</label>
+    <input id="username" type="text" />
+    <br>
+    <label for="channel">Channel:</label>
+    <input id="channel" type="text" />
+    <input id="create" type="submit" value="create">
+    <input id="join" type="submit" value="join">
+    <br>
+    <div id="container"></div>
+    
+    <div id="out">
+      <p>Move with the arrow keys</p>
+      <p>and hit a punch with the spacebar</p>
     </div>
 
-    <div id="sendReceive">
-        <div id="send">
-          <h2>Send</h2>
-          <textarea id="dataChannelSend" disabled placeholder="Press Start, enter some text, then press Send."></textarea>
-      </div>
-      <div id="receive">
-          <h2>Receive</h2>
-          <textarea id="dataChannelReceive" disabled></textarea>
-      </div>
-  </div>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="DataChannel.js"></script>
+    <script src="kinetic-v4.5.3.min.js"></script>
+    <script src="gameCanvas.js"></script>
+    <script src="gkeys.js"></script>
+    <script>
+        
+        window.channel = new DataChannel();
+        window.connected = false;
+        channel.direction = 'one-to-one';
+        var messages = '';
+        var appendMessage = function(message){
+            messages+="\n"+message;
+            $('#messages').html(messages);
+            //console.log(message);
+        };
 
-  <p>View the console to see logging.</p>
+        channel.onopen = function(userid) {
+            appendMessage(userid + ' has been connected!');
+            window.connected = true;
+        }
+        channel.onmessage = function(message, userid, latency) {
+            //appendMessage(userid + ' says: '+message);
+            console.log(message);
+            window.blob.setAttrs({'x':message.x, 'y':message.y});
+            if(window.blob.getAnimation()!=message.state){
+              window.blob.setAnimation(message.state);
+            }
+            console.log('latency:', latency, 'milliseconds');
+        }
+        $('#create').on('click', function(e){
+            channel.userid = $('#username').val();
+            var channelName = $('#channel').val();
+            channel.open(channelName);
+            console.log(channel.userid+' creates to '+channelName);
+            $('canvas').focus();
+        });
+        $('#join').on('click', function(e){
+            channel.userid = $('#username').val();
+            var channelName = $('#channel').val();
+            channel.connect(channelName);
+            console.log(channel.userid+' joins to '+channelName);
+            $('canvas').focus();
+        });
 
-  <p>The <code>RTCPeerConnection</code> objects <code>localPeerConnection</code> and <code>remotePeerConnection</code> are in global scope, so you can inspect them in the console as well.</p>
-  <p>Code in this example used by kind permission of Vikas Marwaha.</p>
-  <p>For more information about PeerConnection, see <a href="http://www.html5rocks.com/en/tutorials/webrtc/basics/#toc-rtcdatachannel" title="RTCDataChannel section of HTML5 Rocks article about WebRTC">Getting Started With WebRTC</a>.</p>
-  <script src="main.js"></script>
+        $('#sendMessage').on('click', function(e){
+            message = $('#message').val();
+            channel.send(message);
+            appendMessage('you: ' + message);
+        });
 
+        // error to open data ports
+        channel.onerror = function(event) {
+            console.log('error: ');
+            console.log(event);
+        }
+
+        // data ports suddenly dropped
+        channel.onclose = function(event) {
+            console.log('close: ');
+            console.log(event);
+        }
+
+        // to create/open a new channel
+
+        // to send text/data or file
+        //channel.send({'alo':'1'});
+        
+        // if soemone already created a channel; to join it: use "connect" method
+        //channel.connect('channel-name');
+
+
+        // to be alerted on data ports get open
+        
+        // to be alerted on data ports get new message
+        
+        // by default; connection is [many-to-many]; you can use following directions
+    </script>
 </body>
 </html>
