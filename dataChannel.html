@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>connect</title>
+
+</head>
+<body>
+    <h1>Battle</h1>
+    <div id="container"></div>
+    
+    <label for="username">Username:</label>
+    <input id="username" type="text" />
+    <br>
+    <label for="channel">Channel:</label>
+    <input id="channel" type="text" />
+    <input id="create" type="submit" value="create">
+    <input id="join" type="submit" value="join">
+    <br>
+    <label for="message">Message:</label>
+    <input id="message" type="text" />
+    <input id="sendMessage" type="submit">
+    <br>
+    <textarea id="messages" style="width:600px; height:400px;"></textarea>
+
+    <script src="DataChannel.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script>
+        $(function(){
+
+        });
+        var channel = new DataChannel();
+        channel.direction = 'one-to-one';
+        var messages = '';
+        var appendMessage = function(message){
+            messages+="\n"+message;
+            $('#messages').html(messages);
+            console.log(message);
+        };
+
+        channel.onopen = function(userid) {
+            appendMessage(userid + ' has been connected!');
+        }
+        channel.onmessage = function(message, userid, latency) {
+            appendMessage(userid + ' says: '+message);
+            console.log('latency:', latency, 'milliseconds');
+        }
+        $('#create').on('click', function(e){
+            channel.userid = $('#username').val();
+            var channelName = $('#channel').val();
+            channel.open(channelName);
+            console.log(channel.userid+' creates to '+channelName);
+        });
+        $('#join').on('click', function(e){
+            channel.userid = $('#username').val();
+            var channelName = $('#channel').val();
+            channel.connect(channelName);
+            console.log(channel.userid+' joins to '+channelName);
+        });
+
+        $('#sendMessage').on('click', function(e){
+            message = $('#message').val();
+            channel.send(message);
+            appendMessage('you: ' + message);
+        });
+
+        // error to open data ports
+        channel.onerror = function(event) {
+            console.log('error: ');
+            console.log(event);
+        }
+
+        // data ports suddenly dropped
+        channel.onclose = function(event) {
+            console.log('close: ');
+            console.log(event);
+        }
+
+        // to create/open a new channel
+
+        // to send text/data or file
+        //channel.send({'alo':'1'});
+        
+        // if soemone already created a channel; to join it: use "connect" method
+        //channel.connect('channel-name');
+
+
+        // to be alerted on data ports get open
+        
+        // to be alerted on data ports get new message
+        
+        // by default; connection is [many-to-many]; you can use following directions
+
+    </script>
+</body>
+</html>
